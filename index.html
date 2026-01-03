@@ -1,2 +1,227 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Web IDE Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="manifest.json">
+
+<!-- Ace Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+
+<style>
+:root {
+    --bg: #f5f5f5;
+    --fg: #000;
+    --panel: #ffffff;
+}
+
+.dark {
+    --bg: #121212;
+    --fg: #ffffff;
+    --panel: #1e1e1e;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background: #000;
+    color: #fff;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header button, select {
+    margin-left: 5px;
+    padding: 6px;
+}
+
+.main {
+    display: flex;
+    height: calc(100vh - 45px);
+}
+
+.editor {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs {
+    display: flex;
+}
+
+.tabs button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    cursor: pointer;
+    background: #bbb;
+}
+
+.tabs button.active {
+    background: var(--panel);
+    font-weight: bold;
+}
+
+.editor-pane {
+    flex: 1;
+    display: none;
+}
+
+.editor-pane.active {
+    display: block;
+}
+
+#preview {
+    width: 50%;
+    border-left: 2px solid #999;
+}
+
+iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <strong>Web IDE Pro</strong>
+    <div>
+        <button onclick="toggleTheme()">🌙</button>
+        <select onchange="setFontSize(this.value)">
+            <option value="14">14px</option>
+            <option value="16">16px</option>
+            <option value="18">18px</option>
+        </select>
+        <button onclick="saveProject()">Save</button>
+        <button onclick="loadProject()">Load</button>
+        <button onclick="exportHTML()">Export</button>
+    </div>
+</header>
+
+<div class="main">
+    <div class="editor">
+        <div class="tabs">
+            <button class="active" onclick="switchTab('html')">HTML</button>
+            <button onclick="switchTab('css')">CSS</button>
+            <button onclick="switchTab('js')">JS</button>
+        </div>
+
+        <div id="html" class="editor-pane active"></div>
+        <div id="css" class="editor-pane"></div>
+        <div id="js" class="editor-pane"></div>
+    </div>
+
+    <div id="preview">
+        <iframe id="output"></iframe>
+    </div>
+</div>
+
+<script>
+let autoRun = true;
+
+/* Ace Editors */
+const htmlEditor = ace.edit("html");
+htmlEditor.session.setMode("ace/mode/html");
+htmlEditor.setValue("<h1>Hello Web IDE</h1>");
+
+const cssEditor = ace.edit("css");
+cssEditor.session.setMode("ace/mode/css");
+cssEditor.setValue("h1 { color: blue; }");
+
+const jsEditor = ace.edit("js");
+jsEditor.session.setMode("ace/mode/javascript");
+jsEditor.setValue("console.log('IDE Ready');");
+
+[htmlEditor, cssEditor, jsEditor].forEach(ed => {
+    ed.setTheme("ace/theme/chrome");
+    ed.session.on("change", () => autoRun && updatePreview());
+});
+
+function updatePreview() {
+    const doc = `
+        ${htmlEditor.getValue()}
+        <style>${cssEditor.getValue()}</style>
+        <script>${jsEditor.getValue()}<\/script>
+    `;
+    document.getElementById("output").srcdoc = doc;
+}
+updatePreview();
+
+/* Tabs */
+function switchTab(tab) {
+    document.querySelectorAll(".editor-pane").forEach(p => p.classList.remove("active"));
+    document.getElementById(tab).classList.add("active");
+
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+    event.target.classList.add("active");
+}
+
+/* Save / Load */
+function saveProject() {
+    localStorage.setItem("html", htmlEditor.getValue());
+    localStorage.setItem("css", cssEditor.getValue());
+    localStorage.setItem("js", jsEditor.getValue());
+    alert("Saved");
+}
+
+function loadProject() {
+    htmlEditor.setValue(localStorage.getItem("html") || "");
+    cssEditor.setValue(localStorage.getItem("css") || "");
+    jsEditor.setValue(localStorage.getItem("js") || "");
+    updatePreview();
+}
+
+/* Export */
+function exportHTML() {
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+<style>${cssEditor.getValue()}</style>
+</head>
+<body>
+${htmlEditor.getValue()}
+<script>${jsEditor.getValue()}<\/script>
+</body>
+</html>`;
+    const blob = new Blob([content], {type: "text/html"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "project.html";
+    a.click();
+}
+
+/* Theme & Font */
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+    const theme = document.body.classList.contains("dark") ? "ace/theme/monokai" : "ace/theme/chrome";
+    [htmlEditor, cssEditor, jsEditor].forEach(e => e.setTheme(theme));
+}
+
+function setFontSize(size) {
+    [htmlEditor, cssEditor, jsEditor].forEach(e => e.setFontSize(size));
+}
+
+/* Service Worker */
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
+
 
