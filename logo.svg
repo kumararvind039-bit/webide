@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512"
+     xmlns="http://www.w3.org/2000/svg">
+  <rect x="32" y="32" width="448" height="448" rx="64" fill="#000000"/>
+  <text x="256" y="300"
+        font-size="160"
+        text-anchor="middle"
+        fill="#ffffff"
+        font-family="monospace">
+    &lt;/&gt;
+  </text>
+</svg>
